@@ -34,7 +34,7 @@ public final class DialogsFixtures extends FixturesData {
         ArrayList<User> users = getUsers();
         return new Dialog(
                 getRandomId(),
-                users.size() > 1 ? groupChatTitles.get(users.size() - 2) : users.get(0).getName(),
+                users.size() > 1 ? groupChatTitles.get(users.size() - 2) : users.get(0).getUsername(),
                 users.size() > 1 ? groupChatImages.get(users.size() - 2) : getRandomAvatar(),
                 users,
                 getMessage(lastMessageCreatedAt),

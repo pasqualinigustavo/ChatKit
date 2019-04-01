@@ -12,6 +12,13 @@ public class User implements IUser {
     private String avatar;
     private boolean online;
 
+    public User() {
+        this.id = null;
+        this.name = null;
+        this.avatar = null;
+        this.online = false;
+    }
+
     public User(String id, String name, String avatar, boolean online) {
         this.id = id;
         this.name = name;
@@ -25,7 +32,7 @@ public class User implements IUser {
     }
 
     @Override
-    public String getName() {
+    public String getUsername() {
         return name;
     }
 

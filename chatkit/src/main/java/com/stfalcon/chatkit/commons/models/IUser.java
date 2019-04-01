@@ -33,7 +33,7 @@ public interface IUser {
      *
      * @return the user's name
      * */
-    String getName();
+    String getUsername();
 
     /**
      * Returns the user's avatar image url
