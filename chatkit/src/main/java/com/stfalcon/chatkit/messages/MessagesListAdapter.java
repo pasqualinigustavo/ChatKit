@@ -28,6 +28,8 @@ import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Filter;
+import android.widget.Filterable;
 import android.widget.TextView;
 
 import com.stfalcon.chatkit.R;
@@ -47,11 +49,12 @@ import java.util.List;
 @SuppressWarnings("WeakerAccess")
 public class MessagesListAdapter<MESSAGE extends IMessage>
         extends RecyclerView.Adapter<ViewHolder>
-        implements RecyclerScrollMoreListener.OnLoadMoreListener {
+        implements RecyclerScrollMoreListener.OnLoadMoreListener, Filterable {
 
     protected static boolean isSelectionModeEnabled;
 
     protected List<Wrapper> items;
+    protected List<Wrapper> itemsFilter;
     private MessageHolders holders;
     private String senderId;
 
@@ -92,6 +95,7 @@ public class MessagesListAdapter<MESSAGE extends IMessage>
         this.holders = holders;
         this.imageLoader = imageLoader;
         this.items = new ArrayList<>();
+        this.itemsFilter = items;
     }
 
     @Override
@@ -102,7 +106,7 @@ public class MessagesListAdapter<MESSAGE extends IMessage>
     @SuppressWarnings("unchecked")
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        Wrapper wrapper = items.get(position);
+        Wrapper wrapper = itemsFilter.get(position);
         holders.bind(holder, wrapper.item, wrapper.isSelected, imageLoader,
                 getMessageClickListener(wrapper),
                 getMessageLongClickListener(wrapper),
@@ -112,12 +116,14 @@ public class MessagesListAdapter<MESSAGE extends IMessage>
 
     @Override
     public int getItemCount() {
-        return items.size();
+        if (itemsFilter != null)
+            return itemsFilter.size();
+        return 0;
     }
 
     @Override
     public int getItemViewType(int position) {
-        return holders.getViewType(items.get(position).item, senderId);
+        return holders.getViewType(itemsFilter.get(position).item, senderId);
     }
 
     @Override
@@ -130,7 +136,7 @@ public class MessagesListAdapter<MESSAGE extends IMessage>
     @Override
     public int getMessagesCount() {
         int count = 0;
-        for (Wrapper item : items) {
+        for (Wrapper item : itemsFilter) {
             if (item.item instanceof IMessage) {
                 count++;
             }
@@ -155,6 +161,7 @@ public class MessagesListAdapter<MESSAGE extends IMessage>
         }
         Wrapper<MESSAGE> element = new Wrapper<>(message);
         items.add(0, element);
+        itemsFilter = items;
         notifyItemRangeInserted(0, isNewMessageToday ? 2 : 1);
         if (layoutManager != null && scroll) {
             layoutManager.scrollToPosition(0);
@@ -182,6 +189,7 @@ public class MessagesListAdapter<MESSAGE extends IMessage>
         }
 
         int oldSize = items.size();
+        itemsFilter = items;
         generateDateHeaders(messages);
         notifyItemRangeInserted(oldSize, items.size() - oldSize);
     }
@@ -224,6 +232,7 @@ public class MessagesListAdapter<MESSAGE extends IMessage>
             Wrapper<MESSAGE> element = new Wrapper<>(newMessage);
             items.remove(position);
             items.add(0, element);
+            itemsFilter = items;
             notifyItemMoved(position, 0);
             notifyItemChanged(0);
         }
@@ -282,6 +291,7 @@ public class MessagesListAdapter<MESSAGE extends IMessage>
                 result = true;
             }
         }
+        itemsFilter = items;
         if (result) {
             recountDateHeaders();
         }
@@ -299,6 +309,7 @@ public class MessagesListAdapter<MESSAGE extends IMessage>
             notifyItemRemoved(index);
             recountDateHeaders();
         }
+        itemsFilter = items;
     }
 
     /**
@@ -316,6 +327,7 @@ public class MessagesListAdapter<MESSAGE extends IMessage>
                 result = true;
             }
         }
+        itemsFilter = items;
         if (result) {
             recountDateHeaders();
         }
@@ -327,7 +339,7 @@ public class MessagesListAdapter<MESSAGE extends IMessage>
      * @return {@code true} if size is 0, otherwise {@code false}
      */
     public boolean isEmpty() {
-        return items.isEmpty();
+        return itemsFilter.isEmpty();
     }
 
     /**
@@ -343,6 +355,7 @@ public class MessagesListAdapter<MESSAGE extends IMessage>
     public void clear(boolean notifyDataSetChanged) {
         if (items != null) {
             items.clear();
+            itemsFilter = items;
             if (notifyDataSetChanged) {
                 notifyDataSetChanged();
             }
@@ -378,7 +391,7 @@ public class MessagesListAdapter<MESSAGE extends IMessage>
     @SuppressWarnings("unchecked")
     public ArrayList<MESSAGE> getSelectedMessages() {
         ArrayList<MESSAGE> selectedMessages = new ArrayList<>();
-        for (Wrapper wrapper : items) {
+        for (Wrapper wrapper : itemsFilter) {
             if (wrapper.item instanceof IMessage && wrapper.isSelected) {
                 selectedMessages.add((MESSAGE) wrapper.item);
             }
@@ -418,8 +431,8 @@ public class MessagesListAdapter<MESSAGE extends IMessage>
      * Unselect all of the selected messages. Notifies {@link SelectionListener} with zero count.
      */
     public void unselectAllItems() {
-        for (int i = 0; i < items.size(); i++) {
-            Wrapper wrapper = items.get(i);
+        for (int i = 0; i < itemsFilter.size(); i++) {
+            Wrapper wrapper = itemsFilter.get(i);
             if (wrapper.isSelected) {
                 wrapper.isSelected = false;
                 notifyItemChanged(i);
@@ -508,13 +521,13 @@ public class MessagesListAdapter<MESSAGE extends IMessage>
     private void recountDateHeaders() {
         List<Integer> indicesToDelete = new ArrayList<>();
 
-        for (int i = 0; i < items.size(); i++) {
-            Wrapper wrapper = items.get(i);
+        for (int i = 0; i < itemsFilter.size(); i++) {
+            Wrapper wrapper = itemsFilter.get(i);
             if (wrapper.item instanceof Date) {
                 if (i == 0) {
                     indicesToDelete.add(i);
                 } else {
-                    if (items.get(i - 1).item instanceof Date) {
+                    if (itemsFilter.get(i - 1).item instanceof Date) {
                         indicesToDelete.add(i);
                     }
                 }
@@ -523,7 +536,7 @@ public class MessagesListAdapter<MESSAGE extends IMessage>
 
         Collections.reverse(indicesToDelete);
         for (int i : indicesToDelete) {
-            items.remove(i);
+            itemsFilter.remove(i);
             notifyItemRemoved(i);
         }
     }
@@ -531,22 +544,22 @@ public class MessagesListAdapter<MESSAGE extends IMessage>
     protected void generateDateHeaders(List<MESSAGE> messages) {
         for (int i = 0; i < messages.size(); i++) {
             MESSAGE message = messages.get(i);
-            this.items.add(new Wrapper<>(message));
+            this.itemsFilter.add(new Wrapper<>(message));
             if (messages.size() > i + 1) {
                 MESSAGE nextMessage = messages.get(i + 1);
                 if (!DateFormatter.isSameDay(message.getCreatedAt(), nextMessage.getCreatedAt())) {
-                    this.items.add(new Wrapper<>(message.getCreatedAt()));
+                    this.itemsFilter.add(new Wrapper<>(message.getCreatedAt()));
                 }
             } else {
-                this.items.add(new Wrapper<>(message.getCreatedAt()));
+                this.itemsFilter.add(new Wrapper<>(message.getCreatedAt()));
             }
         }
     }
 
     @SuppressWarnings("unchecked")
     private int getMessagePositionById(String id) {
-        for (int i = 0; i < items.size(); i++) {
-            Wrapper wrapper = items.get(i);
+        for (int i = 0; i < itemsFilter.size(); i++) {
+            Wrapper wrapper = itemsFilter.get(i);
             if (wrapper.item instanceof IMessage) {
                 MESSAGE message = (MESSAGE) wrapper.item;
                 if (message.getId().contentEquals(id)) {
@@ -559,9 +572,9 @@ public class MessagesListAdapter<MESSAGE extends IMessage>
 
     @SuppressWarnings("unchecked")
     private boolean isPreviousSameDate(int position, Date dateToCompare) {
-        if (items.size() <= position) return false;
-        if (items.get(position).item instanceof IMessage) {
-            Date previousPositionDate = ((MESSAGE) items.get(position).item).getCreatedAt();
+        if (itemsFilter.size() <= position) return false;
+        if (itemsFilter.get(position).item instanceof IMessage) {
+            Date previousPositionDate = ((MESSAGE) itemsFilter.get(position).item).getCreatedAt();
             return DateFormatter.isSameDay(dateToCompare, previousPositionDate);
         } else return false;
     }
@@ -569,9 +582,9 @@ public class MessagesListAdapter<MESSAGE extends IMessage>
     @SuppressWarnings("unchecked")
     private boolean isPreviousSameAuthor(String id, int position) {
         int prevPosition = position + 1;
-        if (items.size() <= prevPosition) return false;
-        else return items.get(prevPosition).item instanceof IMessage
-                && ((MESSAGE) items.get(prevPosition).item).getUser().getId().contentEquals(id);
+        if (itemsFilter.size() <= prevPosition) return false;
+        else return itemsFilter.get(prevPosition).item instanceof IMessage
+                && ((MESSAGE) itemsFilter.get(prevPosition).item).getUser().getId().contentEquals(id);
     }
 
     private void incrementSelectedItemsCount() {
@@ -682,6 +695,45 @@ public class MessagesListAdapter<MESSAGE extends IMessage>
 
     void setStyle(MessagesListStyle style) {
         this.messagesListStyle = style;
+    }
+
+    @Override
+    public Filter getFilter() {
+        return new Filter() {
+            @Override
+            protected void publishResults(CharSequence constraint, FilterResults results) {
+                itemsFilter = (List<Wrapper>) results.values;
+                MessagesListAdapter.this.notifyDataSetChanged();
+            }
+
+            @Override
+            protected FilterResults performFiltering(CharSequence constraint) {
+                List<Wrapper> filteredResults = getFilteredResults(constraint);
+
+                FilterResults results = new FilterResults();
+                results.values = filteredResults;
+
+                return results;
+            }
+        };
+    }
+
+    private List<Wrapper> getFilteredResults(CharSequence constraint) {
+        List<Wrapper> listResult = new ArrayList<>();
+        String filter = constraint.toString();
+
+        if (filter != null && !filter.isEmpty()) {
+            for (Wrapper item : items) {
+                if (item.item instanceof IMessage) {
+                    if (((IMessage) item.item).getText() != null && !((IMessage) item.item).getText().isEmpty()) {
+                        if (((IMessage) item.item).getText().toLowerCase().contains(filter.toLowerCase()))
+                            listResult.add(item);
+                    }
+                }
+            }
+        } else listResult = items;
+
+        return listResult;
     }
 
     /*

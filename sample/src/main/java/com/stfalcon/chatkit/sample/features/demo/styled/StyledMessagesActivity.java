@@ -3,21 +3,28 @@ package com.stfalcon.chatkit.sample.features.demo.styled;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.widget.EditText;
 
 import com.stfalcon.chatkit.messages.MessageInput;
 import com.stfalcon.chatkit.messages.MessagesList;
 import com.stfalcon.chatkit.messages.MessagesListAdapter;
 import com.stfalcon.chatkit.sample.R;
 import com.stfalcon.chatkit.sample.common.data.fixtures.MessagesFixtures;
+import com.stfalcon.chatkit.sample.common.data.model.Message;
 import com.stfalcon.chatkit.sample.features.demo.DemoMessagesActivity;
 import com.stfalcon.chatkit.utils.DateFormatter;
 
+import java.util.ArrayList;
 import java.util.Date;
 
 public class StyledMessagesActivity extends DemoMessagesActivity
         implements MessageInput.InputListener,
         MessageInput.AttachmentsListener,
         DateFormatter.Formatter {
+
+    EditText edSearch;
 
     public static void open(Context context) {
         context.startActivity(new Intent(context, StyledMessagesActivity.class));
@@ -31,7 +38,10 @@ public class StyledMessagesActivity extends DemoMessagesActivity
         setContentView(R.layout.activity_styled_messages);
 
         messagesList = (MessagesList) findViewById(R.id.messagesList);
+        edSearch = findViewById(R.id.edSearch);
         initAdapter();
+
+        edSearch.addTextChangedListener(textWatcher);
 
         MessageInput input = (MessageInput) findViewById(R.id.input);
         input.setInputListener(this);
@@ -68,4 +78,22 @@ public class StyledMessagesActivity extends DemoMessagesActivity
         super.messagesAdapter.setDateHeadersFormatter(this);
         messagesList.setAdapter(super.messagesAdapter);
     }
+
+    TextWatcher textWatcher = new TextWatcher() {
+        @Override
+        public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+        }
+
+        @Override
+        public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            if (messagesAdapter != null)
+                messagesAdapter.getFilter().filter(charSequence);
+        }
+
+        @Override
+        public void afterTextChanged(Editable editable) {
+
+        }
+    };
 }

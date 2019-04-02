@@ -33,7 +33,7 @@ ext {
     siteUrl = 'https://github.com/pasqualinigustavo/chatkit'
     gitUrl = 'https://github.com/pasqualinigustavo/chatkit'
 
-    libraryVersion = '0.3.5'
+    libraryVersion = '0.3.6'
 
     developerId = 'pasqualinigustavo'
     developerName = 'Gustavo Pasqualini'
