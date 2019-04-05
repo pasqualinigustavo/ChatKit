@@ -27,12 +27,22 @@ public final class DateFormatter {
     }
 
     public static String format(Date date, Template template) {
-        return format(date, template.get());
+        return format(date, template.get(), Locale.getDefault());
+    }
+
+    public static String format(Date date, Template template, Locale locale) {
+        return format(date, template.get(), locale);
     }
 
     public static String format(Date date, String format) {
         if (date == null) return "";
         return new SimpleDateFormat(format, Locale.getDefault())
+                .format(date);
+    }
+
+    public static String format(Date date, String format, Locale locale) {
+        if (date == null) return "";
+        return new SimpleDateFormat(format, locale)
                 .format(date);
     }
 

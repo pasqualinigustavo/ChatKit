@@ -13,6 +13,7 @@ import com.stfalcon.chatkit.sample.features.demo.DemoDialogsActivity;
 import com.stfalcon.chatkit.utils.DateFormatter;
 
 import java.util.Date;
+import java.util.Locale;
 
 public class StyledDialogsActivity extends DemoDialogsActivity
         implements DateFormatter.Formatter {
@@ -40,7 +41,7 @@ public class StyledDialogsActivity extends DemoDialogsActivity
     @Override
     public String format(Date date) {
         if (DateFormatter.isToday(date)) {
-            return DateFormatter.format(date, DateFormatter.Template.TIME);
+            return DateFormatter.format(date, DateFormatter.Template.TIME, new Locale("pt", "BR"));
         } else if (DateFormatter.isYesterday(date)) {
             return getString(R.string.date_header_yesterday);
         } else if (DateFormatter.isCurrentYear(date)) {
